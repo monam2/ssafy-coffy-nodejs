@@ -49,7 +49,7 @@ interface MenuStats {
 }
 
 async function fetchMenuList(): Promise<Order[]> {
-  const url = "";
+  const url = "https://ssafy-coffy.vercel.app/api/order";
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -63,19 +63,25 @@ async function fetchMenuList(): Promise<Order[]> {
   }
 }
 
-function generateStats(menuList: Menu[]): { summary: MenuStats[], totalCount: number, totalPrice: number } {
+function generateStats(menuList: Menu[]): {
+  summary: MenuStats[];
+  totalCount: number;
+  totalPrice: number;
+} {
   const menuStats: { [key: string]: MenuStats } = {};
   let totalCount = 0;
   let totalPrice = 0;
 
-  menuList.forEach(menu => {
+  menuList.forEach((menu) => {
     const options = [
       menu.isShot ? "샷" : "",
       menu.isWhip ? "휘핑" : "",
       menu.isSyrup ? "시럽" : "",
       menu.isMilk ? "우유" : "",
       menu.isPeorl ? "펄" : "",
-    ].filter(Boolean).join(", ");
+    ]
+      .filter(Boolean)
+      .join(", ");
 
     const menuKey = `${menu.menu}${options ? ` (${options})` : ""}`;
 
@@ -93,7 +99,9 @@ function generateStats(menuList: Menu[]): { summary: MenuStats[], totalCount: nu
     totalPrice += menu.price;
   });
 
-  const summary = Object.values(menuStats).sort((a, b) => -b.name.localeCompare(a.name));
+  const summary = Object.values(menuStats).sort(
+    (a, b) => -b.name.localeCompare(a.name)
+  );
 
   return {
     summary,
@@ -104,7 +112,7 @@ function generateStats(menuList: Menu[]): { summary: MenuStats[], totalCount: nu
 
 async function sendToMatterMost(): Promise<boolean> {
   try {
-    const url = "";
+    const matterMostUrl: string = "https://meeting.ssafy.com/hooks/sfiy6wiqejdtjnqifizhycnroc";
 
     const now = new Date();
     const year = now.getFullYear();
@@ -141,10 +149,14 @@ async function sendToMatterMost(): Promise<boolean> {
           menu.isSyrup ? "시럽" : "",
           menu.isMilk ? "우유" : "",
           menu.isPeorl ? "펄" : "",
-        ].filter(Boolean).join(", ");
-        orderTable += `|     ${order.classNum}      |  ${firstOrder ? order.user + ' (' + order.mmId.slice(0,3) + '**)' : "└"}   |   ${
-          menu.isHot ? "핫" : "아이스"
-        }  ${menu.menu}      |   ${options}    |   ${menu.price.toLocaleString()}    |\n`;
+        ]
+          .filter(Boolean)
+          .join(", ");
+        orderTable += `|     ${order.classNum}      |  ${
+          firstOrder ? order.user + " (" + order.mmId.slice(0, 3) + "**)" : "└"
+        }   |   ${menu.isHot ? "핫" : "아이스"}  ${
+          menu.menu
+        }      |   ${options}    |   ${menu.price.toLocaleString()}    |\n`;
         const student: PickUpMemberDto = {
           id: order.orderId,
           mmId: order.mmId,
@@ -162,14 +174,23 @@ async function sendToMatterMost(): Promise<boolean> {
     let sb = `\n####  [싸피코피  :th_fire_2:] - ${formattedDate} :starmong:\n`;
 
     sb += `#### :alert_siren: 오늘의 커피 수령자는? \n`;
+
+    ///////////////////////////////////////////////////////////////////////////
+    /**
+     * TEST 수정할 것
+     */
     const test = true;
+
     const testId = 'kangcw0107';
+
     randomPickUpMembers.forEach((member: PickUpMemberDto) => {
-      sb += `- **${member.classNum}반 ${member.user}** (@${test ? testId : member.mmId})\n`;
+      sb += `- **${member.classNum}반 ${member.user}** (@${
+        test ? testId : member.mmId
+      })\n`;
     });
-    sb += `점심 식사 후 1시~1시 10분 사이에 자전거 거치대 앞으로 나가주세요!\n`
-    sb += `\n`
-    sb += `#### :pink_check: 오늘의 주문 내역\n`
+    sb += `점심 식사 후 1시~1시 10분 사이에 자전거 거치대 앞으로 나가주세요!\n`;
+    sb += `\n`;
+    sb += `#### :pink_check: 오늘의 주문 내역\n`;
     sb += orderTable;
 
     const { summary, totalCount, totalPrice } = generateStats(allMenus);
@@ -177,8 +198,10 @@ async function sendToMatterMost(): Promise<boolean> {
     sb += `\n#### :bar_chart: 주문 통계\n`;
     sb += `| 메뉴 | 갯수 | 금액 |\n`;
     sb += `|:----------:|:-------:|:------------:|\n`;
-    summary.forEach(stat => {
-      sb += `| ${stat.name} | ${stat.count} | ${stat.price.toLocaleString()}원 |\n`;
+    summary.forEach((stat) => {
+      sb += `| ${stat.name} | ${
+        stat.count
+      } | ${stat.price.toLocaleString()}원 |\n`;
     });
     sb += `| **총합** | **${totalCount}** | **${totalPrice.toLocaleString()}원** |\n`;
 
@@ -186,7 +209,7 @@ async function sendToMatterMost(): Promise<boolean> {
       text: sb,
     };
 
-    const response = await fetch(url, {
+    const response = await fetch(matterMostUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -203,7 +226,9 @@ async function sendToMatterMost(): Promise<boolean> {
   }
 }
 
-function selectRandomPickUpMembers(members: PickUpMemberDto[]): PickUpMemberDto[] {
+function selectRandomPickUpMembers(
+  members: PickUpMemberDto[]
+): PickUpMemberDto[] {
   const selectedMembers: PickUpMemberDto[] = [];
   const remainingMembers = [...members];
 
@@ -238,9 +263,12 @@ sendToMatterMost()
   .then((result) => console.log("Initial message sent successfully:", result))
   .catch((error) => console.error("Error sending initial message:", error));
 
-// 매일 오전 11시 15분에 메시지 보내기
-const alarmHour = 11;
-const alarmMinute = 15;
+/////////////////////////////////////////////////////////////////////////////
+/**
+ * 시간 설정하기
+ */
+const alarmHour = 5;
+const alarmMinute = 30;
 
 cron.schedule(`${alarmMinute} ${alarmHour} * * *`, () => {
   sendToMatterMost()

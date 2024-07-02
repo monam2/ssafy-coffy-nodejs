@@ -4,8 +4,7 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "start": "node --loader ts-node/esm src/server.ts",
-    "build": "tsc"
+    "start": "node --loader ts-node/esm index.ts"
   },
   "dependencies": {
     "express": "^4.17.1",
