@@ -268,7 +268,7 @@ sendToMatterMost()
  * 시간 설정하기
  */
 const alarmHour = 5;
-const alarmMinute = 30;
+const alarmMinute = 35;
 
 cron.schedule(`${alarmMinute} ${alarmHour} * * *`, () => {
   sendToMatterMost()
