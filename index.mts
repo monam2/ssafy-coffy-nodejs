@@ -1,6 +1,22 @@
 import express, { Request, Response } from "express";
 import fetch from "node-fetch";
 import cron from "node-cron";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { collection, doc, setDoc, getDoc, query, where, getDocs } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: `https://ssafy-coffy.vercel.app//api`,
+  authDomain: `ssafy-cofy.firebaseapp.com`,
+  projectId: `ssafy-cofy`,
+  storageBucket: `ssafy-cofy.appspot.com`,
+  messagingSenderId: `741188879255`,
+  appId: `1:741188879255:web:389d736b9616f963977ad2`,
+  measurementId: `G-EZR27KPHC4`,
+};
+
+const fbapp = initializeApp(firebaseConfig);
+const db = getFirestore(fbapp);
 
 const app = express();
 const port = 3000;
@@ -48,19 +64,51 @@ interface MenuStats {
   price: number;
 }
 
-async function fetchMenuList(): Promise<Order[]> {
-  const url = "https://ssafy-coffy.vercel.app/api/order";
+const getOrdersByDate = async (date:Date) => {
+  const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+  const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+
+  const q = query(
+    collection(db, "orderList"),
+    where("createdAt", ">=", startOfDay),
+    where("createdAt", "<=", endOfDay),
+  );
+
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data as Order[];
-  } catch (error) {
-    console.error("Error fetching menu list:", error);
+    const querySnapshot = await getDocs(q);
+    const orders:Order[] = [];
+    querySnapshot.forEach((doc:any) => {
+      orders.push(doc.data());
+    });
+    return orders;
+  } catch (e) {
+    console.error("Error getting documents: ", e);
     return [];
   }
+};
+
+async function fetchMenuList(): Promise<Order[]> {
+  const today = new Date();
+  const orders:Order[] = await getOrdersByDate(today);
+  try {
+    return orders as Order[];
+  } catch (e) {
+    console.error("Error fetching menu list:", e);
+    return [];
+  }
+
+  // const url = "https://ssafy-coffy.vercel.app/api/order";
+  // try {
+  //   const response = await fetch(url);
+  //   if (!response.ok) {
+  //     throw new Error(`HTTP error! status: ${response.status}`);
+  //   }
+  //   const data = await response.json();
+  //   return data as Order[];
+  // } catch (error) {
+  //   console.error("Error fetching menu list:", error);
+  //   return [];
+  // }
 }
 
 function generateStats(menuList: Menu[]): {
@@ -112,7 +160,12 @@ function generateStats(menuList: Menu[]): {
 
 async function sendToMatterMost(): Promise<boolean> {
   try {
-    const matterMostUrl: string = "https://meeting.ssafy.com/hooks/sfiy6wiqejdtjnqifizhycnroc";
+    const matterMostUrl: string = "https://meeting.ssafy.com/hooks/xtuowqjffjnkpk55jpd4ge77ma";
+    // 음료 채널
+    // - https://meeting.ssafy.com/hooks/xtuowqjffjnkpk55jpd4ge77ma
+    
+    // 내 테스트 채널
+    // - https://meeting.ssafy.com/hooks/sfiy6wiqejdtjnqifizhycnroc
 
     const now = new Date();
     const year = now.getFullYear();
@@ -179,15 +232,20 @@ async function sendToMatterMost(): Promise<boolean> {
     /**
      * TEST 수정할 것
      */
-    const test = true;
+    const test = false;
 
     const testId = 'kangcw0107';
 
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>테스트 테스트
+    // sb += `현재 테스트 중입니다 현재 테스트 중입니다!\n`;
+
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     randomPickUpMembers.forEach((member: PickUpMemberDto) => {
       sb += `- **${member.classNum}반 ${member.user}** (@${
         test ? testId : member.mmId
       })\n`;
     });
+
     sb += `점심 식사 후 1시~1시 10분 사이에 자전거 거치대 앞으로 나가주세요!\n`;
     sb += `\n`;
     sb += `#### :pink_check: 오늘의 주문 내역\n`;
@@ -259,16 +317,16 @@ app.listen(port, () => {
 });
 
 // 서버 시작 시 자동으로 메시지를 보내기 위해 호출
-sendToMatterMost()
-  .then((result) => console.log("Initial message sent successfully:", result))
-  .catch((error) => console.error("Error sending initial message:", error));
+// sendToMatterMost()
+//   .then((result) => console.log("Initial message sent successfully:", result))
+//   .catch((error) => console.error("Error sending initial message:", error));
 
 /////////////////////////////////////////////////////////////////////////////
 /**
  * 시간 설정하기
  */
-const alarmHour = 5;
-const alarmMinute = 35;
+const alarmHour = 11
+const alarmMinute = 1;
 
 cron.schedule(`${alarmMinute} ${alarmHour} * * *`, () => {
   sendToMatterMost()
