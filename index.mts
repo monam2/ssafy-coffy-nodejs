@@ -402,7 +402,7 @@ cron.schedule(`${alarmMinute} ${alarmHour} * * 1-5`, () => {
     .catch((error) => console.error("Error sending scheduled message:", error));
 });
 
-cron.schedule(`1 9 * * 1-5`, () => {
+cron.schedule(`5 23 * * 1-5`, () => {
   sendOpenNotice()
     .then((result) =>
       console.log("Scheduled message sent successfully:", result)
@@ -410,7 +410,7 @@ cron.schedule(`1 9 * * 1-5`, () => {
     .catch((error) => console.error("Error sending scheduled message:", error));
 });
 
-cron.schedule(`0 11 * * 1-5`, () => {
+cron.schedule(`6 23 * * 1-5`, () => {
   sendCloseNotice()
     .then((result) =>
       console.log("Scheduled message sent successfully:", result)
