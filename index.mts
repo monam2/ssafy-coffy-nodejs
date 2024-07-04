@@ -5,6 +5,13 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { collection, doc, setDoc, getDoc, query, where, getDocs } from 'firebase/firestore';
 
+// 음료 채널
+const channel = "https://meeting.ssafy.com/hooks/xtuowqjffjnkpk55jpd4ge77ma"
+// 내 테스트 채널
+const test = "https://meeting.ssafy.com/hooks/sfiy6wiqejdtjnqifizhycnroc"
+
+const matterMostUrl: string = test
+
 const firebaseConfig = {
   apiKey: `https://ssafy-coffy.vercel.app//api`,
   authDomain: `ssafy-cofy.firebaseapp.com`,
@@ -122,11 +129,11 @@ function generateStats(menuList: Menu[]): {
 
   menuList.forEach((menu) => {
     const options = [
-      menu.isShot ? "샷" : "",
-      menu.isWhip ? "휘핑" : "",
-      menu.isSyrup ? "시럽" : "",
-      menu.isMilk ? "우유" : "",
-      menu.isPeorl ? "펄" : "",
+      menu.isShot ? "+샷" : "",
+      menu.isWhip ? "+휘핑" : "",
+      menu.isSyrup ? "+시럽" : "",
+      menu.isMilk ? "+우유" : "",
+      menu.isPeorl ? "+펄" : "",
     ]
       .filter(Boolean)
       .join(", ");
@@ -158,14 +165,74 @@ function generateStats(menuList: Menu[]): {
   };
 }
 
+async function sendOpenNotice(): Promise<boolean> {
+  try {
+    let sb = `### [☕️싸피코피] 커피 주문 시작
+
+[https://ssafy-coffy.vercel.app/](https://ssafy-coffy.vercel.app/)
+11시 10분 마감 (마감 10분 전 알림)
+
+#### 사용방법
+
+*   이름, MM ID로 로그인(연락을 위해 꼭 올바른 정보 기입 부탁드립니다.)
+*   커피 메뉴에서 옵션을 선택후 핫/아이스 버튼을 누르면 장바구니에 저장됩니다.
+*   계좌번호가 보이는 시점에 이미 주문이 접수되었으므로, 송금 실패 등 문제가 발생하면 MM 부탁드립니다.
+*   메뉴에 없는 옵션(휘핑 제거 등)은 MM으로 요청주시면 됩니다.`;
+
+
+    const requestBody = {
+      text: sb,
+    };
+
+    const response = await fetch(matterMostUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    console.log(">>>> 주문 시작 알림 발송 완료")
+
+    return response.ok;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
+
+
+async function sendCloseNotice(): Promise<boolean> {
+  try {
+    let sb = `### [☕️싸피코피] 주문이 10분 후 마감됩니다.
+
+[https://ssafy-coffy.vercel.app/](https://ssafy-coffy.vercel.app/)`;
+
+
+    const requestBody = {
+      text: sb,
+    };
+
+    const response = await fetch(matterMostUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    console.log(">>>> 주문 마감 10분 전 알림 발송 완료")
+
+    return response.ok;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
 async function sendToMatterMost(): Promise<boolean> {
   try {
-    const matterMostUrl: string = "https://meeting.ssafy.com/hooks/xtuowqjffjnkpk55jpd4ge77ma";
-    // 음료 채널
-    // - https://meeting.ssafy.com/hooks/xtuowqjffjnkpk55jpd4ge77ma
-    
-    // 내 테스트 채널
-    // - https://meeting.ssafy.com/hooks/sfiy6wiqejdtjnqifizhycnroc
 
     const now = new Date();
     const year = now.getFullYear();
@@ -197,11 +264,11 @@ async function sendToMatterMost(): Promise<boolean> {
       let firstOrder = true;
       order.menus.forEach((menu) => {
         const options = [
-          menu.isShot ? "샷" : "",
-          menu.isWhip ? "휘핑" : "",
-          menu.isSyrup ? "시럽" : "",
-          menu.isMilk ? "우유" : "",
-          menu.isPeorl ? "펄" : "",
+          menu.isShot ? "+샷" : "",
+          menu.isWhip ? "+휘핑" : "",
+          menu.isSyrup ? "+시럽" : "",
+          menu.isMilk ? "+우유" : "",
+          menu.isPeorl ? "+펄" : "",
         ]
           .filter(Boolean)
           .join(", ");
@@ -224,7 +291,7 @@ async function sendToMatterMost(): Promise<boolean> {
 
     const randomPickUpMembers = selectRandomPickUpMembers(pickUpMember);
 
-    let sb = `\n####  [싸피코피  :th_fire_2:] - ${formattedDate} :starmong:\n`;
+    let sb = `\n####  [싸피코피] - ${formattedDate} :starmong:\n`;
 
     sb += `#### :alert_siren: 오늘의 커피 수령자는? \n`;
 
@@ -325,11 +392,26 @@ app.listen(port, () => {
 /**
  * 시간 설정하기
  */
-const alarmHour = 11
-const alarmMinute = 1;
-
-cron.schedule(`${alarmMinute} ${alarmHour} * * *`, () => {
+const alarmHour = 22
+const alarmMinute = 33;
+cron.schedule(`${alarmMinute} ${alarmHour} * * 1-5`, () => {
   sendToMatterMost()
+    .then((result) =>
+      console.log("Scheduled message sent successfully:", result)
+    )
+    .catch((error) => console.error("Error sending scheduled message:", error));
+});
+
+cron.schedule(`33 22 * * 1-5`, () => {
+  sendOpenNotice()
+    .then((result) =>
+      console.log("Scheduled message sent successfully:", result)
+    )
+    .catch((error) => console.error("Error sending scheduled message:", error));
+});
+
+cron.schedule(`33 22 * * 1-5`, () => {
+  sendCloseNotice()
     .then((result) =>
       console.log("Scheduled message sent successfully:", result)
     )
