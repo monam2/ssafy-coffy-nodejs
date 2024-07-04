@@ -392,8 +392,8 @@ app.listen(port, () => {
 /**
  * 시간 설정하기
  */
-const alarmHour = 22
-const alarmMinute = 33;
+const alarmHour = 11
+const alarmMinute = 10;
 cron.schedule(`${alarmMinute} ${alarmHour} * * 1-5`, () => {
   sendToMatterMost()
     .then((result) =>
@@ -402,7 +402,7 @@ cron.schedule(`${alarmMinute} ${alarmHour} * * 1-5`, () => {
     .catch((error) => console.error("Error sending scheduled message:", error));
 });
 
-cron.schedule(`33 22 * * 1-5`, () => {
+cron.schedule(`1 9 * * 1-5`, () => {
   sendOpenNotice()
     .then((result) =>
       console.log("Scheduled message sent successfully:", result)
@@ -410,7 +410,7 @@ cron.schedule(`33 22 * * 1-5`, () => {
     .catch((error) => console.error("Error sending scheduled message:", error));
 });
 
-cron.schedule(`33 22 * * 1-5`, () => {
+cron.schedule(`0 11 * * 1-5`, () => {
   sendCloseNotice()
     .then((result) =>
       console.log("Scheduled message sent successfully:", result)
